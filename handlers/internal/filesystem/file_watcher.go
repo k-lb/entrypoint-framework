@@ -28,7 +28,7 @@ import (
 	"github.com/k-lb/entrypoint-framework/handlers/internal/global"
 )
 
-// Watcher desribes types that are source of information about events (e.g. file change, errors, etc.).
+// Watcher describes types that are source of information about events (e.g. file change, errors, etc.).
 // Watcher also notifies about such event via a channel.
 type Watcher interface {
 	// GetEvent returns file event that occurred in the system.
@@ -44,12 +44,12 @@ type Watcher interface {
 type WatcherEvent struct {
 	// Operation denotes which action (e.g. write, read) was observed on the watched file.
 	Operation fsnotify.Op
-	// Error denotes that error has occured while watching.
+	// Error denotes that error has occurred while watching.
 	Error error
 }
 
 // FileWatcher observes file and notifies when observed type of change occurs (e.g. write). It always provides latest
-// event that has occured.
+// event that has occurred.
 type FileWatcher struct {
 	notifier        *global.EventNotifier[WatcherEvent]
 	fsnotifyWatcher *fsnotify.Watcher

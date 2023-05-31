@@ -26,9 +26,7 @@ import (
 	m "go.uber.org/mock/gomock"
 )
 
-var (
-	logDiscard = global.HandleNilLogger(nil)
-)
+var logDiscard = global.HandleNilLogger(nil)
 
 type HandlersTestSuite struct {
 	suite.Suite

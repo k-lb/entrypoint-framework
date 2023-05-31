@@ -67,7 +67,7 @@ func newFileActivationHandler(activationFile string, log *slog.Logger, fs filesy
 	}
 	fw, err := fs.NewFileWatcher(activationFile, fsnotify.Create|fsnotify.Remove)
 	if err != nil {
-		return nil, fmt.Errorf("could not create a new notifier. Reason: %w", err)
+		return nil, fmt.Errorf("could not create a new file watcher for a file: %s. Reason: %w", activationFile, err)
 	}
 
 	a.handle(new(filesystem.WatcherEvent))
