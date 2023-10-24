@@ -82,7 +82,7 @@ func (a *FileActivationHandler) handle(ev *filesystem.WatcherEvent) {
 	}
 	event := ActivationEvent{State: a.fs.DoesExist(a.activationFile), Error: ev.Error}
 	a.wasChanged <- event
-	a.log.Debug("an event was sent", slog.Bool("state", event.State), slog.Any("error", event.Error))
+	a.log.Debug("an event was sent", slog.Bool("state", event.State), slog.Any(errorKey, event.Error))
 }
 
 // listenActivationChanges listens to a filePresenceChanged channel and handle its events or closure.

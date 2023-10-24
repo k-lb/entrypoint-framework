@@ -124,7 +124,7 @@ func (c *ConfigurationHandlerBase[_]) handle(ev *filesystem.WatcherEvent) {
 		err = fmt.Errorf("could not create a hardlink of a file %s to %s. Reason: %w", c.newConfigPath, c.newConfigHardlinkPath, err)
 	}
 	c.wasChanged <- err
-	c.log.Debug("A wasChanged event was sent", slog.Any("error", err))
+	c.log.Debug("A wasChanged event was sent", slog.Any(errorKey, err))
 }
 
 // listenToEvents listens to changes of a new configuration from watcher and an update channel.

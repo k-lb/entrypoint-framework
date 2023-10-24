@@ -23,11 +23,13 @@
 // Tarred ConfigurationHandler is used when configuration contains of multiple files which are provided as a tar.
 // Custom ConfigurationHandler is used when a user needs to run some custom actions file while updating.
 //
-// ProcessHandler TODO
+// ProcessHandler provides information of changes to a process (start and end) and allows to send signals to it.
 package handlers
 
 import (
 	"log/slog"
+	"os/exec"
+	"syscall"
 
 	"github.com/k-lb/entrypoint-framework/handlers/internal/filesystem"
 	"github.com/k-lb/entrypoint-framework/handlers/internal/global"
@@ -35,6 +37,7 @@ import (
 
 const (
 	handlerLogKey   = "handler"
+	errorKey        = "error"
 	typeKey         = "type"
 	hardlinkPostfix = "_hardlink"
 )
@@ -113,4 +116,24 @@ func NewCustomConfigurationHandler[T any](newConfigFile, hardlink string, update
 		slog.String("hardlink", hardlink))
 	return newConfigurationHandlerBase(
 		newConfigFile, hardlink, update, log, filesystem.New(log))
+}
+
+// ProcessHandler executes an application and notifies when it starts and ends. It also allows to send signals to
+// a process while running.
+type ProcessHandler interface {
+	GetStartedChannel() <-chan error
+	GetEndedChannel() <-chan error
+	Start()
+	Stop() error
+	Kill() error
+	Signal(syscall.Signal) error
+}
+
+// NewProcessHandler returns a pointer to a new CmdProcessHandler instance.
+func NewProcessHandler(cmd *exec.Cmd, logger *slog.Logger) (*CmdProcessHandler, error) {
+	log := global.HandleNilLogger(logger).With(slog.String(handlerLogKey, "process"))
+	if cmd != nil {
+		log = log.With(slog.String("command", cmd.String()))
+	}
+	return newCmdProcessHandler(cmd, log)
 }
