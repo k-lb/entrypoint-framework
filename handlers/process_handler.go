@@ -24,8 +24,9 @@ import (
 	"syscall"
 )
 
-// CmdProcessHandler executes an application and notifies when it starts and ends. It also allows to send signals to
-// the process.
+// CmdProcessHandler executes an application and notifies when it starts and ends. The application can be started only
+// once. To start it the second time create a new ProcessHandler. It also allows to send signals to a process while
+// running.
 type CmdProcessHandler struct {
 	cmd     *exec.Cmd
 	started chan error
@@ -33,12 +34,12 @@ type CmdProcessHandler struct {
 	log     *slog.Logger
 }
 
-// GetStartedChannel returns a read only channel with errors from a process start.
+// GetStartedChannel returns a read only channel with an error when the process has started.
 func (p *CmdProcessHandler) GetStartedChannel() <-chan error {
 	return p.started
 }
 
-// GetEndedChannel returns a read only channel with errors from a process finish.
+// GetEndedChannel returns a read only channel with an error when the process has finished.
 func (p *CmdProcessHandler) GetEndedChannel() <-chan error {
 	return p.ended
 }

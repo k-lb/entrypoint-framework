@@ -46,7 +46,7 @@ func (a *FileActivationHandler) GetWasChangedChannel() <-chan ActivationEvent {
 	return nil
 }
 
-// Close triggers closing of FileActivationHandler.
+// Close triggers closing of the FileActivationHandler.
 func (a *FileActivationHandler) Close() {
 	if a.isOpen {
 		close(a.done)

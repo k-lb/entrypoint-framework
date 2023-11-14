@@ -43,8 +43,8 @@ type ConfigurationHandlerBase[T any] struct {
 	fs  filesystem.Filesystem
 }
 
-// GetWasChangedChannel returns a read only channel with an error when the configuration was changed. The error is nil
-// when the configuration was handled successfully. When the handler is closed it returns a nil channel.
+// GetWasChangedChannel returns a read only channel with an error that occurred during configuration changing. The error
+// is nil when the configuration was changed successfully. When the handler is closed it returns a nil channel.
 func (c *ConfigurationHandlerBase[_]) GetWasChangedChannel() <-chan error {
 	if c.isOpen {
 		return c.wasChanged

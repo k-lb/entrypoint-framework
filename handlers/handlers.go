@@ -42,10 +42,11 @@ const (
 	hardlinkPostfix = "_hardlink"
 )
 
-// ActivationHandler provides information of a current state (active or inactive) of application. It can be closed with
-// Close method.
+// ActivationHandler provides information of a current state (active or inactive) of application.
 type ActivationHandler interface {
+	// GetWasChangedChannel returns a read only channel with an ActivationEvent when the activation was changed.
 	GetWasChangedChannel() <-chan ActivationEvent
+	// Close triggers closing of the ActivationHandler.
 	Close()
 }
 
@@ -66,11 +67,15 @@ func NewActivationHandler(activationFile string, logger *slog.Logger) (*FileActi
 // written and read by different application and locking mechanism can't be used (e.g. two docker containers with shared
 // volume). A new configuration file should only be moved to by writer and hardlinked by reader. ConfigurationHandler
 // provides information about changes made to a configuration file. It allows to update it in a consistent way and to
-// get update result. It can be closed with Close method.
+// get update result.
 type ConfigurationHandler[T any] interface {
+	// GetWasChangedChannel returns a read only channel with an error that occurred during configuration changing.
 	GetWasChangedChannel() <-chan error
+	// Update triggers the configuration update.
 	Update()
+	// GetUpdateResultChannel returns a read only channel with a T event when the configuration was updated.
 	GetUpdateResultChannel() <-chan T
+	// Close triggers closing of the ConfigurationHandler.
 	Close()
 }
 
@@ -121,11 +126,17 @@ func NewCustomConfigurationHandler[T any](newConfigFile, hardlink string, update
 // ProcessHandler executes an application and notifies when it starts and ends. It also allows to send signals to
 // a process while running.
 type ProcessHandler interface {
+	// GetStartedChannel returns a read only channel with an error that occurred during process startup.
 	GetStartedChannel() <-chan error
+	// GetEndedChannel returns a read only channel with an error that occurred during process termination.
 	GetEndedChannel() <-chan error
+	// Start starts a process.
 	Start()
+	// Stop stops a process.
 	Stop() error
+	// Kill kills a process.
 	Kill() error
+	// Signal sends a signal to a process.
 	Signal(syscall.Signal) error
 }
 
