@@ -1,4 +1,4 @@
-name: golangci-lint
+name: lint
 on:
   push:
     branches: [ "main" ]
@@ -10,8 +10,8 @@ permissions:
   pull-requests: read
 
 jobs:
-  golangci:
-    name: "Run golangci-lint"
+  linters:
+    name: "Run linters"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,13 +21,7 @@ jobs:
           cache: false
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
-  staticcheck:
-    name: "Run staticcheck"
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-    - uses: dominikh/staticcheck-action@v1.3.0
-      with:
-        install-go: false
+      - name: staticckech
+        uses: dominikh/staticcheck-action@v1.3.0
+        with:
+          install-go: false
