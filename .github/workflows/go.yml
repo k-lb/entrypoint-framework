@@ -37,3 +37,18 @@ jobs:
       run: go tool fix -diff $(go list -f {{.Dir}} ./...)
       continue-on-error: true
       working-directory: ${{ matrix.dir }}
+
+  test-entrypoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build test-entrypoint image
+        uses: docker/build-push-action@v5
+        with:
+          file: "test/Dockerfile"
+          tags: test-entrypoint:latest
+          push: false
+          load: true
+      - name: Run test-entrypoint
+        run: docker run test-entrypoint:latest
