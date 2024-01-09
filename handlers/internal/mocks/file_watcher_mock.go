@@ -5,6 +5,7 @@
 //
 //	mockgen -package=mocks -destination=../mocks/file_watcher_mock.go -source=file_watcher.go -mock_names=Watcher=MockWatcher
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
