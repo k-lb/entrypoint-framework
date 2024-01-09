@@ -5,6 +5,7 @@
 //
 //	mockgen -package=mocks -destination=internal/mocks/handlers_constructor_mock.go -source=handlers_constructor.go -mock_names=HandlersConstructorI=MockHandlersConstructor
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
