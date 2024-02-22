@@ -1,2 +1,2 @@
-To build test entrypoint you need to go to parent directory with test and common folders and execute
+To build test entrypoint you need to go to parent directory with test and handlers folders and execute
 docker build -t <tag> -f test/Dockerfile .
