@@ -82,7 +82,7 @@ func (s State) string() string {
 
 // InState is a helper struct for checking a State. It should be used like
 // is(state).act(a, ...).config(c, ...).proc(p, ...).value() which is equivalent to
-// (state.activation == a || ...) && (state.configuration == p || ...) && (state.process == p || ...)
+// (state.activation == a || ...) && (state.configuration == c || ...) && (state.process == p || ...)
 type InState struct {
 	State
 	isState bool

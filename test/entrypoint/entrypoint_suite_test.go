@@ -34,7 +34,7 @@ type EntrypointTestSuite struct {
 
 type mocksControl struct {
 	*m.Controller
-	hc            *mocks.MockHandlersConstructorIface
+	hc            *mocks.MockHandlersConstructor
 	activation    *mocks.MockActivationHandler
 	configuration *mocks.MockConfigurationHandler[handlers.UpdateResult]
 	process       *mocks.MockProcessHandler
@@ -47,7 +47,7 @@ func (e *EntrypointTestSuite) runWithMockEntrypoint(
 		defer ctrl.Finish()
 		mocks := &mocksControl{
 			Controller:    ctrl,
-			hc:            mocks.NewMockHandlersConstructorIface(ctrl),
+			hc:            mocks.NewMockHandlersConstructor(ctrl),
 			activation:    mocks.NewMockActivationHandler(ctrl),
 			configuration: mocks.NewMockConfigurationHandler[handlers.UpdateResult](ctrl),
 			process:       mocks.NewMockProcessHandler(ctrl),

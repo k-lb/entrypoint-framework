@@ -25,7 +25,7 @@ import (
 
 // HandlersConstructorIface interface is created for tests only.
 //
-//go:generate mockgen -package=mocks -destination=internal/mocks/handlers_constructor_mock.go -source=handlers_constructor.go -mock_names=HandlersConstructorI=MockHandlersConstructor
+//go:generate mockgen -package=mocks -destination=internal/mocks/handlers_constructor_mock.go -source=handlers_constructor.go -mock_names=HandlersConstructorIface=MockHandlersConstructor
 //go:generate mockgen -package=mocks -destination=internal/mocks/handlers_mock.go -source=../../handlers/handlers.go
 type HandlersConstructorIface interface {
 	NewActivationHandler(activationFile string, logger *slog.Logger) (handlers.ActivationHandler, error)
@@ -33,7 +33,7 @@ type HandlersConstructorIface interface {
 	NewProcessHandler(cmd *exec.Cmd, logger *slog.Logger) (handlers.ProcessHandler, error)
 }
 
-// HandlersConstructor implements HandlersConstructorI with calls to handlers package
+// HandlersConstructor implements HandlersConstructorIface with calls to handlers package
 type HandlersConstructor struct {
 }
 
