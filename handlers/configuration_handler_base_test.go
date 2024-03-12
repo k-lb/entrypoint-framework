@@ -31,7 +31,7 @@ func (h *HandlersTestSuite) TestNewConfigurationHandlerBase() {
 
 	h.RunWithMockEnv("when NewFileWatcher returns an error, should returns a nil handler and an error", func(mocks *mocksControl) {
 		watcherErr := errors.New("watcher error")
-		mocks.fs.EXPECT().NewFileWatcher("newConfigPath", fsnotify.Create).Times(1).Return(mocks.watcher, watcherErr)
+		mocks.fs.EXPECT().NewFileWatcher("newConfigPath", fsnotify.Create|fsnotify.Remove).Times(1).Return(mocks.watcher, watcherErr)
 		configHandler, err := newConfigurationHandlerBase("newConfigPath", "newConfigHardlinkPath", neverUsedUpdateFunc, logDiscard, mocks.fs)
 
 		h.Nil(configHandler)
@@ -94,6 +94,7 @@ func (h *HandlersTestSuite) TestNewConfigurationHandlerBase() {
 		events []any
 	}{
 		{name: "a fsnotify error event has occurred", events: []any{errFsnotify}},
+		{name: "a fsnotify remove operation event has occurred", events: []any{fsnotify.Remove}},
 		{name: "a hardlink error event has occurred", events: []any{errHardlink}},
 		{name: "an event without errors has occurred", events: []any{nil}},
 		{name: "events with no errors, a fsnotify error and a hardlink error have occurred", events: []any{nil, errFsnotify, errHardlink}},
@@ -122,6 +123,10 @@ func (h *HandlersTestSuite) TestNewConfigurationHandlerBase() {
 					}
 					configChanged <- struct{}{}
 					h.ErrorIs(<-configHandler.GetWasChangedChannel(), errWasChanged)
+				} else if operation, ok := ev.(fsnotify.Op); ok {
+					mocks.watcher.EXPECT().GetEvent().Times(1).Return(&filesystem.WatcherEvent{Operation: operation})
+					configChanged <- struct{}{}
+					h.ErrorIs(<-configHandler.GetWasChangedChannel(), ErrConfigDeleted)
 				} else if updateResult, ok := ev.(int); ok {
 					configHandler.Update()
 					if updateResult > 0 {
@@ -138,7 +143,7 @@ func (h *HandlersTestSuite) TestNewConfigurationHandlerBase() {
 
 	h.RunWithMockEnv("when Update is called after handler was closed", func(mocks *mocksControl) {
 		configChanged := make(chan struct{}, 10)
-		mocks.fs.EXPECT().NewFileWatcher("newConfigPath", fsnotify.Create).Times(1).Return(mocks.watcher, nil)
+		mocks.fs.EXPECT().NewFileWatcher("newConfigPath", fsnotify.Create|fsnotify.Remove).Times(1).Return(mocks.watcher, nil)
 		mocks.fs.EXPECT().DoesExist("newConfigPath").Times(1).Return(false)
 		errDeleteHardlink := errors.New("delete hardlink error")
 		mocks.fs.EXPECT().DeleteFile("newConfigHardlinkPath").Times(1).Return(errDeleteHardlink)
@@ -172,7 +177,7 @@ func (h *HandlersTestSuite) TestNewConfigurationHandlerBase() {
 
 func (h *HandlersTestSuite) runWithExpects(name string, test func(chan struct{}, *mocksControl) *ConfigurationHandlerBase[int]) {
 	h.RunWithMockEnv(name, func(mocks *mocksControl) {
-		mocks.fs.EXPECT().NewFileWatcher("newConfigPath", fsnotify.Create).Times(1).Return(mocks.watcher, nil)
+		mocks.fs.EXPECT().NewFileWatcher("newConfigPath", fsnotify.Create|fsnotify.Remove).Times(1).Return(mocks.watcher, nil)
 		mocks.fs.EXPECT().DeleteFile("newConfigHardlinkPath").Times(1).Return(nil)
 		configChanged := make(chan struct{}, 10)
 		mocks.watcher.EXPECT().GetNotificationChannel().Times(1).Return(configChanged)
