@@ -17,6 +17,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -100,7 +101,7 @@ func newConfigurationHandlerBase[T any](
 		log: log,
 		fs:  fs,
 	}
-	fw, err := fs.NewFileWatcher(newConfigPath, fsnotify.Create)
+	fw, err := fs.NewFileWatcher(newConfigPath, fsnotify.Create|fsnotify.Remove)
 	if err != nil {
 		return nil, fmt.Errorf("could not create a new file watcher for a file: %s. Reason: %w", newConfigPath, err)
 	}
@@ -112,6 +113,8 @@ func newConfigurationHandlerBase[T any](
 	return c, nil
 }
 
+var ErrConfigDeleted = errors.New("configuration was deleted")
+
 // handle pushes a handling error to wasChanged channel and logs it.
 func (c *ConfigurationHandlerBase[_]) handle(ev *filesystem.WatcherEvent) {
 	if ev == nil { // ignore invalidated events
@@ -120,6 +123,8 @@ func (c *ConfigurationHandlerBase[_]) handle(ev *filesystem.WatcherEvent) {
 	err := ev.Error
 	if err != nil {
 		err = fmt.Errorf("error from watcher(%s). Reason: %w", c.newConfigPath, err)
+	} else if ev.Operation.Has(fsnotify.Remove) {
+		err = ErrConfigDeleted
 	} else if err = c.fs.Hardlink(c.newConfigPath, c.newConfigHardlinkPath); err != nil {
 		err = fmt.Errorf("could not create a hardlink of a file %s to %s. Reason: %w", c.newConfigPath, c.newConfigHardlinkPath, err)
 	}

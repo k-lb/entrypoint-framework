@@ -54,6 +54,14 @@ func changeActivation() {
 // changeConfiguration creates tarred configuration in tmpConfigurationPath with file names and contents from 'files'
 // map and moves it to watchedConfigurationPath.
 func changeConfiguration(files map[string]string) {
+	if len(files) == 0 {
+		if _, err := os.Stat(watchedConfigurationPath); err == nil {
+			if err := os.Remove(watchedConfigurationPath); err != nil {
+				panic(err.Error())
+			}
+		}
+		return
+	}
 	args := []string{"--remove-files", "-C", tmp, "-cf", tmpConfigurationPath}
 	for file, content := range files {
 		if err := os.WriteFile(path.Join(tmp, file), []byte(content), 0664); err != nil {
@@ -84,14 +92,14 @@ func main() {
 		log.Printf("entrypoint finished. error: %v\n", cmd.Wait())
 	}()
 	log.Println("Starting test")
-	configs := [...]map[string]string{{"f0": "c0", "f1": "c1", "f2": "c2"}, {"f1": "c1", "f2": "c2.2", "f3": "c3"}}
+	configs := [...]map[string]string{{"f0": "c0", "f1": "c1", "f2": "c2"}, {"f1": "c1", "f2": "c2.2", "f3": "c3"}, {}}
 	for i := 0; i < numberOfEvents; i++ {
 		switch rand.Intn(3) {
 		case 0:
 			log.Printf("activation changing to %t\n", !isactiveExists)
 			changeActivation()
 		case 1:
-			configNum := rand.Intn(2)
+			configNum := rand.Intn(3)
 			log.Printf("config %d\n", configNum)
 			changeConfiguration(configs[configNum])
 		case 2:
