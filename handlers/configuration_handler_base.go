@@ -140,25 +140,24 @@ func (c *ConfigurationHandlerBase[_]) listenToEvents(fw filesystem.Watcher) {
 		case _, open := <-configChangedCh:
 			if open {
 				c.handle(fw.GetEvent())
-			} else {
-				configChangedCh = nil
-				if err := c.fs.DeleteFile(c.newConfigHardlinkPath); err != nil {
-					c.wasChangedCh <- err
-				}
-				close(c.wasChangedCh)
-				c.log.Debug("A wasChanged channel was closed")
-			}
-		case _, open := <-c.updateStartCh:
-			if !open {
-				fw.Stop()
-				c.updateStartCh = nil
-				close(c.updateResultCh)
-				c.log.Debug("An update result channel was closed")
 				continue
 			}
-			if c.updateFunc != nil {
+			configChangedCh = nil
+			if err := c.fs.DeleteFile(c.newConfigHardlinkPath); err != nil {
+				c.wasChangedCh <- err
+			}
+			close(c.wasChangedCh)
+			c.log.Debug("A wasChanged channel was closed")
+
+		case _, open := <-c.updateStartCh:
+			if open && c.updateFunc != nil {
 				c.updateResultCh <- c.updateFunc()
 				c.log.Debug("An update result event was sent")
+			} else if !open {
+				c.updateStartCh = nil
+				fw.Stop()
+				close(c.updateResultCh)
+				c.log.Debug("An update result channel was closed")
 			}
 		}
 		if configChangedCh == nil && c.updateStartCh == nil {
