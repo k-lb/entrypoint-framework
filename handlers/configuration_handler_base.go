@@ -31,11 +31,11 @@ import (
 // hardlinked by reader). This triggers creation of a hardlink and pushing 'was changed' event. Then update can be done
 // without any risk of reading/writing the same file.
 type ConfigurationHandlerBase[T any] struct {
-	wasChanged   chan error
-	updateStart  chan struct{}
-	updateFunc   func() T
-	updateResult chan T
-	isOpen       bool
+	wasChangedCh   chan error
+	updateStartCh  chan struct{}
+	updateFunc     func() T
+	updateResultCh chan T
+	isOpen         bool
 
 	newConfigPath         string //a path to a new configuration.
 	newConfigHardlinkPath string //a path to a hardlink of a new configuration.
@@ -48,7 +48,7 @@ type ConfigurationHandlerBase[T any] struct {
 // is nil when the configuration was changed successfully. When the handler is closed it returns a nil channel.
 func (c *ConfigurationHandlerBase[_]) GetWasChangedChannel() <-chan error {
 	if c.isOpen {
-		return c.wasChanged
+		return c.wasChangedCh
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func (c *ConfigurationHandlerBase[_]) GetWasChangedChannel() <-chan error {
 // Update triggers the configuration update. When the handler is closed it only logs an error.
 func (c *ConfigurationHandlerBase[_]) Update() {
 	if c.isOpen {
-		c.updateStart <- struct{}{}
+		c.updateStartCh <- struct{}{}
 	} else {
 		c.log.Error("can't update the configuration after handler was closed")
 	}
@@ -66,7 +66,7 @@ func (c *ConfigurationHandlerBase[_]) Update() {
 // handler is closed it returns a nil channel.
 func (c *ConfigurationHandlerBase[T]) GetUpdateResultChannel() <-chan T {
 	if c.isOpen {
-		return c.updateResult
+		return c.updateResultCh
 	}
 	return nil
 }
@@ -74,7 +74,7 @@ func (c *ConfigurationHandlerBase[T]) GetUpdateResultChannel() <-chan T {
 // Close triggers closing of the ConfigurationHandlerBase.
 func (c *ConfigurationHandlerBase[_]) Close() {
 	if c.isOpen {
-		close(c.updateStart)
+		close(c.updateStartCh)
 		c.isOpen = false
 	}
 }
@@ -89,10 +89,10 @@ func newConfigurationHandlerBase[T any](
 	log *slog.Logger,
 	fs filesystem.Filesystem) (*ConfigurationHandlerBase[T], error) {
 	c := &ConfigurationHandlerBase[T]{
-		wasChanged:   make(chan error, global.DefaultChanBuffSize),
-		updateStart:  make(chan struct{}, global.DefaultChanBuffSize),
-		updateResult: make(chan T, global.DefaultChanBuffSize),
-		isOpen:       true,
+		wasChangedCh:   make(chan error, global.DefaultChanBuffSize),
+		updateStartCh:  make(chan struct{}, global.DefaultChanBuffSize),
+		updateResultCh: make(chan T, global.DefaultChanBuffSize),
+		isOpen:         true,
 
 		newConfigPath:         newConfigPath,
 		newConfigHardlinkPath: newConfigHardlinkPath,
@@ -128,40 +128,40 @@ func (c *ConfigurationHandlerBase[_]) handle(ev *filesystem.WatcherEvent) {
 	} else if err = c.fs.Hardlink(c.newConfigPath, c.newConfigHardlinkPath); err != nil {
 		err = fmt.Errorf("could not create a hardlink of a file %s to %s. Reason: %w", c.newConfigPath, c.newConfigHardlinkPath, err)
 	}
-	c.wasChanged <- err
+	c.wasChangedCh <- err
 	c.log.Debug("A wasChanged event was sent", slog.Any(errorKey, err))
 }
 
 // listenToEvents listens to changes of a new configuration from watcher and an update channel.
 func (c *ConfigurationHandlerBase[_]) listenToEvents(fw filesystem.Watcher) {
-	configChanged := fw.GetNotificationChannel()
+	configChangedCh := fw.GetNotificationChannel()
 	for {
 		select {
-		case _, open := <-configChanged:
+		case _, open := <-configChangedCh:
 			if open {
 				c.handle(fw.GetEvent())
 			} else {
-				configChanged = nil
+				configChangedCh = nil
 				if err := c.fs.DeleteFile(c.newConfigHardlinkPath); err != nil {
-					c.wasChanged <- err
+					c.wasChangedCh <- err
 				}
-				close(c.wasChanged)
+				close(c.wasChangedCh)
 				c.log.Debug("A wasChanged channel was closed")
 			}
-		case _, open := <-c.updateStart:
+		case _, open := <-c.updateStartCh:
 			if !open {
 				fw.Stop()
-				c.updateStart = nil
-				close(c.updateResult)
+				c.updateStartCh = nil
+				close(c.updateResultCh)
 				c.log.Debug("An update result channel was closed")
 				continue
 			}
 			if c.updateFunc != nil {
-				c.updateResult <- c.updateFunc()
+				c.updateResultCh <- c.updateFunc()
 				c.log.Debug("An update result event was sent")
 			}
 		}
-		if configChanged == nil && c.updateStart == nil {
+		if configChangedCh == nil && c.updateStartCh == nil {
 			return
 		}
 	}
