@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync/atomic"
 
 	"github.com/k-lb/entrypoint-framework/handlers/internal/filesystem"
 	"github.com/k-lb/entrypoint-framework/handlers/internal/global"
@@ -31,11 +32,13 @@ import (
 // hardlinked by reader). This triggers creation of a hardlink and pushing 'was changed' event. Then update can be done
 // without any risk of reading/writing the same file.
 type ConfigurationHandlerBase[T any] struct {
-	wasChangedCh   chan error
-	updateStartCh  chan struct{}
-	updateFunc     func() T
-	updateResultCh chan T
-	isOpen         bool
+	wasChangedCh    chan error
+	wasChanged      *atomic.Bool
+	updateStartCh   chan struct{}
+	isUpdateRunning *atomic.Bool
+	updateFunc      func() T
+	updateResultCh  chan T
+	isOpen          bool
 
 	newConfigPath         string //a path to a new configuration.
 	newConfigHardlinkPath string //a path to a hardlink of a new configuration.
@@ -54,12 +57,22 @@ func (c *ConfigurationHandlerBase[_]) GetWasChangedChannel() <-chan error {
 }
 
 // Update triggers the configuration update. When the handler is closed it only logs an error.
-func (c *ConfigurationHandlerBase[_]) Update() {
-	if c.isOpen {
-		c.updateStartCh <- struct{}{}
-	} else {
-		c.log.Error("can't update the configuration after handler was closed")
+func (c *ConfigurationHandlerBase[_]) Update() error {
+	if !c.isOpen {
+		return errors.New("can't update the configuration after handler was closed")
 	}
+	if !c.wasChanged.Load() {
+		return errors.New("an Update was called without configuration changes")
+	}
+	if c.isUpdateRunning.Load() {
+		return errors.New("an Update was called before previous update of configuration was finished")
+	}
+	if len(c.updateResultCh) > 0 {
+		return errors.New("an Update was called before previous configuration result was read")
+	}
+	c.updateStartCh <- struct{}{}
+	c.isUpdateRunning.Store(true)
+	return nil
 }
 
 // GetUpdateResultChannel returns a read only channel with a T event when the configuration was updated. When the
@@ -89,10 +102,12 @@ func newConfigurationHandlerBase[T any](
 	log *slog.Logger,
 	fs filesystem.Filesystem) (*ConfigurationHandlerBase[T], error) {
 	c := &ConfigurationHandlerBase[T]{
-		wasChangedCh:   make(chan error, global.DefaultChanBuffSize),
-		updateStartCh:  make(chan struct{}, global.DefaultChanBuffSize),
-		updateResultCh: make(chan T, global.DefaultChanBuffSize),
-		isOpen:         true,
+		wasChangedCh:    make(chan error, global.DefaultChanBuffSize),
+		wasChanged:      &atomic.Bool{},
+		updateStartCh:   make(chan struct{}, global.DefaultChanBuffSize),
+		isUpdateRunning: &atomic.Bool{},
+		updateResultCh:  make(chan T, global.DefaultChanBuffSize),
+		isOpen:          true,
 
 		newConfigPath:         newConfigPath,
 		newConfigHardlinkPath: newConfigHardlinkPath,
@@ -101,6 +116,8 @@ func newConfigurationHandlerBase[T any](
 		log: log,
 		fs:  fs,
 	}
+	c.wasChanged.Store(false)
+	c.isUpdateRunning.Store(false)
 	fw, err := fs.NewFileWatcher(newConfigPath, fsnotify.Create|fsnotify.Remove)
 	if err != nil {
 		return nil, fmt.Errorf("could not create a new file watcher for a file: %s. Reason: %w", newConfigPath, err)
@@ -127,6 +144,8 @@ func (c *ConfigurationHandlerBase[_]) handle(ev *filesystem.WatcherEvent) {
 		err = ErrConfigDeleted
 	} else if err = c.fs.Hardlink(c.newConfigPath, c.newConfigHardlinkPath); err != nil {
 		err = fmt.Errorf("could not create a hardlink of a file %s to %s. Reason: %w", c.newConfigPath, c.newConfigHardlinkPath, err)
+	} else {
+		c.wasChanged.Store(true)
 	}
 	c.wasChangedCh <- err
 	c.log.Debug("A wasChanged event was sent", slog.Any(errorKey, err))
@@ -144,6 +163,7 @@ func (c *ConfigurationHandlerBase[_]) listenToEvents(fw filesystem.Watcher) {
 			}
 			configChangedCh = nil
 			if err := c.fs.DeleteFile(c.newConfigHardlinkPath); err != nil {
+				// c.log.Error("could not delete a file", slog.String("file", c.newConfigHardlinkPath), slog.Any("error", err))
 				c.wasChangedCh <- err
 			}
 			close(c.wasChangedCh)
@@ -159,6 +179,8 @@ func (c *ConfigurationHandlerBase[_]) listenToEvents(fw filesystem.Watcher) {
 				close(c.updateResultCh)
 				c.log.Debug("An update result channel was closed")
 			}
+			c.wasChanged.Store(false)
+			c.isUpdateRunning.Store(false)
 		}
 		if configChangedCh == nil && c.updateStartCh == nil {
 			return
