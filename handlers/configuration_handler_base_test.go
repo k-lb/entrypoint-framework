@@ -80,7 +80,7 @@ func (h *HandlersTestSuite) TestNewConfigurationHandlerBase() {
 				wasChangedError := <-configHandler.GetWasChangedChannel()
 				if test.hardlinkError != nil {
 					h.Error(wasChangedError)
-					h.ErrorIs(err, test.hardlinkError)
+					h.ErrorIs(wasChangedError, test.hardlinkError)
 				} else {
 					h.NoError(wasChangedError)
 				}

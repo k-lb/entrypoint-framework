@@ -26,7 +26,7 @@ import (
 )
 
 func (h *HandlersTestSuite) TestFileActivationHandler() {
-	activationFile := "path/to/a/file.test"
+	const activationFile = "path/to/a/file.test"
 	h.RunWithMockEnv("when a NewFileWatcher returns an error", func(mock *mocksControl) {
 		mock.fs.EXPECT().NewFileWatcher(activationFile, fsnotify.Create|fsnotify.Remove).Times(1).Return(nil, errors.New("Watcher error"))
 		handler, err := newFileActivationHandler(activationFile, logDiscard, mock.fs)
@@ -36,7 +36,7 @@ func (h *HandlersTestSuite) TestFileActivationHandler() {
 	})
 
 	h.RunWithMockEnv("channel capacity and Close method", func(mock *mocksControl) {
-		mock.init(activationFile)
+		mock.init(activationFile, false)
 		mock.watcher.EXPECT().Stop().Times(1)
 
 		handler, err := newFileActivationHandler(activationFile, logDiscard, mock.fs)
@@ -79,7 +79,7 @@ func (h *HandlersTestSuite) TestFileActivationHandler() {
 	}
 	for _, test := range testCases {
 		h.RunWithMockEnv("when a watcher is not nil and "+test.name, func(mock *mocksControl) {
-			filePresenceChanged := mock.init(activationFile)
+			filePresenceChanged := mock.init(activationFile, test.initialFileExists)
 			handler, err := newFileActivationHandler(activationFile, logDiscard, mock.fs)
 
 			for _, event := range test.events {
@@ -101,7 +101,7 @@ func (h *HandlersTestSuite) TestFileActivationHandler() {
 		})
 	}
 	h.RunWithMockEnv("when a watcher is not nil and event is invalid", func(mock *mocksControl) {
-		filePresenceChanged := mock.init(activationFile)
+		filePresenceChanged := mock.init(activationFile, false)
 		handler, err := newFileActivationHandler(activationFile, logDiscard, mock.fs)
 		h.Require().NotNil(handler)
 		h.Require().NoError(err)
