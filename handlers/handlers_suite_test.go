@@ -38,11 +38,11 @@ type mocksControl struct {
 	watcher *mocks.MockWatcher
 }
 
-func (mock *mocksControl) init(activationFile string) chan struct{} {
+func (mock *mocksControl) init(activationFile string, initialExists bool) chan struct{} {
 	filePresenceChanged := make(chan struct{}, 1)
 	mock.watcher.EXPECT().GetNotificationChannel().Times(1).Return(filePresenceChanged)
 	mock.fs.EXPECT().NewFileWatcher(m.Any(), m.Any()).Times(1).Return(mock.watcher, nil)
-	mock.fs.EXPECT().DoesExist(activationFile).Times(1).Return(false)
+	mock.fs.EXPECT().DoesExist(activationFile).Times(1).Return(initialExists)
 	return filePresenceChanged
 }
 

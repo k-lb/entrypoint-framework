@@ -1,4 +1,4 @@
-FROM golang:1.21
+FROM golang:1.22
 
 WORKDIR /workspace
 
@@ -10,4 +10,4 @@ RUN (cd /workspace/test/entrypoint && \
 RUN (cd /workspace/test && \
  go build -o /usr/local/bin/entrypoint_test)
 
-CMD "entrypoint_test"
+CMD ["entrypoint_test"]

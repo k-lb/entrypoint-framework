@@ -1,6 +1,6 @@
 module github.com/k-lb/entrypoint-framework
 
-go 1.21
+go 1.22.0
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0
