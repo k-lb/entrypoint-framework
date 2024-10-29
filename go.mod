@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/stretchr/testify v1.9.0
-	go.uber.org/mock v0.4.0
+	go.uber.org/mock v0.5.0
 )
 
 require (
