@@ -5,6 +5,7 @@
 //
 //	mockgen -package=mocks -destination=internal/mocks/handlers_mock.go -source=../../handlers/handlers.go
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
@@ -20,6 +21,7 @@ import (
 type MockActivationHandler struct {
 	ctrl     *gomock.Controller
 	recorder *MockActivationHandlerMockRecorder
+	isgomock struct{}
 }
 
 // MockActivationHandlerMockRecorder is the mock recorder for MockActivationHandler.
@@ -69,6 +71,7 @@ func (mr *MockActivationHandlerMockRecorder) GetWasChangedChannel() *gomock.Call
 type MockConfigurationHandler[T any] struct {
 	ctrl     *gomock.Controller
 	recorder *MockConfigurationHandlerMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockConfigurationHandlerMockRecorder is the mock recorder for MockConfigurationHandler.
@@ -144,6 +147,7 @@ func (mr *MockConfigurationHandlerMockRecorder[T]) Update() *gomock.Call {
 type MockProcessHandler struct {
 	ctrl     *gomock.Controller
 	recorder *MockProcessHandlerMockRecorder
+	isgomock struct{}
 }
 
 // MockProcessHandlerMockRecorder is the mock recorder for MockProcessHandler.
