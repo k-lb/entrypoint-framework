@@ -5,6 +5,7 @@
 //
 //	mockgen -package=mocks -destination=internal/mocks/handlers_constructor_mock.go -source=handlers_constructor.go -mock_names=HandlersConstructorIface=MockHandlersConstructor
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
@@ -21,6 +22,7 @@ import (
 type MockHandlersConstructor struct {
 	ctrl     *gomock.Controller
 	recorder *MockHandlersConstructorMockRecorder
+	isgomock struct{}
 }
 
 // MockHandlersConstructorMockRecorder is the mock recorder for MockHandlersConstructor.
