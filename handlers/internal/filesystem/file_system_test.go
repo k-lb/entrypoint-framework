@@ -204,4 +204,9 @@ func (f *filesystemTestSuite) TestListFileNamesInDir() {
 		f.NoError(err)
 		f.ElementsMatch(files, expectedFiles)
 	})
+	f.RunWithTestDir("when an empty directory exists", func(testDir string) {
+		files, err := f.ListFileNamesInDir(testDir)
+		f.NoError(err)
+		f.Empty(files)
+	})
 }
