@@ -90,6 +90,17 @@ func (h *HandlersTestSuite) TestUpdateTarredConfig() {
 				"common dif": Modified,
 				"old":        Deleted,
 			}},
+		{name: "when old dir is empty and no errors occurred",
+			newConfigFiles: []string{"new", "other", "third"},
+			oldConfigFiles: []string{},
+			events: []event{{configFile: "new", move: true},
+				{configFile: "other", move: true},
+				{configFile: "third", move: true}},
+			expectedChangedFiles: map[string]Modification{
+				"new":   Created,
+				"other": Created,
+				"third": Created,
+			}},
 	}
 	for _, test := range testCases {
 		test := test
