@@ -22,6 +22,6 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
       - name: staticckech
-        uses: dominikh/staticcheck-action@v1.3.1
+        uses: dominikh/staticcheck-action@v1.4.0
         with:
           install-go: false
