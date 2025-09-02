@@ -6,7 +6,7 @@ replace github.com/k-lb/entrypoint-framework => ../..
 
 require (
 	github.com/k-lb/entrypoint-framework v0.0.0-00010101000000-000000000000
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
 )
 
