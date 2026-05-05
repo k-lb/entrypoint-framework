@@ -132,7 +132,7 @@ func listFileNamesInDir(dirPath, dirName string) ([]string, error) {
 			}
 			continue
 		}
-		if !(dirEntry.Type().IsRegular() || dirEntry.Type()&fs.ModeSymlink != 0) {
+		if !dirEntry.Type().IsRegular() && (dirEntry.Type()&fs.ModeSymlink == 0) {
 			return nil, fmt.Errorf("%s is not a regular file or symlink, type: %s", filepath.Join(dirPath, dirEntry.Name()), dirEntry.Type().String())
 		}
 		fileNameList = append(fileNameList, fileName)
