@@ -20,18 +20,24 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 )
 
 // Extract extracts all files from a tarball to a toDir directory. If any errors occurs or anything from the tarball is
 // not a regular file, directory, hardlink or symlink then an error is returned.
-func (real) Extract(tarball, toDir string) error {
+func (r real) Extract(tarball, toDir string) error {
+	handleClose := func(r real, c io.Closer) {
+		if err := c.Close(); err != nil {
+			r.log.Warn("failed to close file", slog.Any("error", err))
+		}
+	}
 	reader, err := os.Open(tarball)
 	if err != nil {
 		return fmt.Errorf("could not open %s. Reason: %w", tarball, err)
 	}
-	defer reader.Close()
+	defer handleClose(r, reader)
 	tarReader := tar.NewReader(reader)
 	for {
 		header, err := tarReader.Next()
@@ -49,7 +55,7 @@ func (real) Extract(tarball, toDir string) error {
 			if err != nil {
 				return fmt.Errorf("could not open a file %s from %s. Reason: %w", path, tarball, err)
 			}
-			defer file.Close()
+			defer handleClose(r, file)
 
 			_, err = io.Copy(file, tarReader)
 			if err != nil {

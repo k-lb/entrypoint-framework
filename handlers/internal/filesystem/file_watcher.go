@@ -119,5 +119,5 @@ func (f *FileWatcher) GetNotificationChannel() <-chan struct{} {
 
 // Stop ceases FileWatcher operations.
 func (f *FileWatcher) Stop() {
-	f.fsnotifyWatcher.Close()
+	_ = f.fsnotifyWatcher.Close()
 }

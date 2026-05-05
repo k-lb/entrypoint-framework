@@ -32,7 +32,7 @@ func (e *filesystemTestSuite) RunWithTestDir(name string, test func(string)) {
 	testDir, err := os.MkdirTemp("", "test_env_*")
 	e.Require().NoError(err, "can't build test environment")
 	e.Run(name, func() {
-		defer os.RemoveAll(testDir) //defer is to make sure it is called even if panic happens
+		defer func() { _ = os.RemoveAll(testDir) }() // defer is to make sure it is called even if panic happens
 		e.T().Parallel()
 		test(testDir)
 	})
