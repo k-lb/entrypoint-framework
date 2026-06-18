@@ -148,3 +148,23 @@ func NewProcessHandler(cmd *exec.Cmd, logger *slog.Logger) (*CmdProcessHandler, 
 	}
 	return newCmdProcessHandler(cmd, log)
 }
+
+// ProcessReaperHandler
+type ProcessReaperHandler interface {
+	// Start starts a process.
+	Start()
+	// Stop stops a process.
+	Stop()
+	Stats() ProcessReaperStats
+}
+
+type ProcessReaperStats struct {
+	Exited   uint64
+	Signaled uint64
+}
+
+// NewProcessReaperHandler returns a pointer to a new CmdProcessHandler instance.
+func NewProcessReaperHandler(logger *slog.Logger) *ChildrenProcessReaperHandler {
+	log := global.HandleNilLogger(logger).With(slog.String(handlerLogKey, "reaper"))
+	return newProcessReaperHandler(log)
+}
